@@ -4,4 +4,4 @@ This script is in a WIP state. Always create a copy of your work before testing 
 
 https://github.com/Project-Cartographer/H2Codez
 
-Special thanks to num0005 and General-101 for assisting with the creating of this.
+Special thanks to num0005 and General-101 for assisting with the creation of this.
