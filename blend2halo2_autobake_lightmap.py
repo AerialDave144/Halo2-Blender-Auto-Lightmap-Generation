@@ -259,6 +259,7 @@ if use_denoise is True:
     normal_image_node = comp_tree.nodes.new(type='CompositorNodeImage')
 
     denoise_node = comp_tree.nodes.new(type='CompositorNodeDenoise')
+    denoise_node.use_hdr = True
     
     scale_node = comp_tree.nodes.new(type='CompositorNodeTransform')
     scale_node.filter_type = 'BICUBIC'
@@ -297,7 +298,7 @@ if use_denoise is True:
     bpy.data.scenes.remove(denoise_scene) 
     
 if use_denoise is True:
-    print('Finished Denosing')
+    print('Finished Denosing\n')
 
 ### Run H2Tool edit-bitmap command if enabled:
 if run_h2codez_bitmap_edit is True:
@@ -329,4 +330,4 @@ if run_h2codez_bitmap_edit is True:
         except:
             pass
 
-print('Finished!')
+print('\nFinished!')
