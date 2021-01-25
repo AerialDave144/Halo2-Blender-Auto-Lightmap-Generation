@@ -109,12 +109,13 @@ name_list = []
 bpy.ops.object.mode_set(mode = 'OBJECT')
 bpy.ops.object.select_all(action='DESELECT')
 
-#Hide all objects in specified collection:
+#Hide all objects from render in specified collection:
 for obj in bpy.data.collections['lightmap'].objects:
     obj.hide_render = True
     
 #Iterate through all objects in specified collection:
 for obj in bpy.data.collections['lightmap'].objects:
+    print('\n\nCluster/Instance Object: ' + obj.name)
     try:
         res_x = int(obj_dict[obj.name][2]) * float(bake_res_scale)
         res_y = int(obj_dict[obj.name][3]) * float(bake_res_scale)
@@ -129,18 +130,21 @@ for obj in bpy.data.collections['lightmap'].objects:
         res_x = 32
         res_y = 32
     bpy.ops.object.select_all(action='DESELECT')
+    #Unhide object from render
     obj.hide_render = False
-    print('\n\nCluster/Instance Object: ' + obj.name)
-    #obj.select_set(True)
+    
     bpy.context.view_layer.objects.active = obj
     uv1 = obj.data.uv_layers[1].name
     obj.data.uv_layers.active = obj.data.uv_layers[uv1]
-    print('Remoiving materials from ' + obj.name)
+    
+    #Remove all materials from object
     for material in obj.material_slots:
         for i in range(len(obj.material_slots)):
             obj.active_material_index = i
             bpy.ops.object.material_slot_remove()
-    print('Finished removing all materials from ' + obj.name)
+    print('All materials removed for ' + obj.name)
+    
+    #Set up material with node tree for texture baking:
     bpy.ops.object.material_slot_add()
     print('\nSetting up materials for ' + obj.name)
     try:
@@ -152,13 +156,13 @@ for obj in bpy.data.collections['lightmap'].objects:
     mat.use_nodes = True
 
     uv_node = mat.node_tree.nodes.new('ShaderNodeUVMap')
-        #
-        #if tex_node is None:
     try:
         if bpy.data.images[obj.name] is not None:
             bpy.data.images.remove(bpy.data.images[obj.name])
     except:
         pass
+    
+    #Set up image to bake to
     if use_denoise is True:
         lightmap_image = bpy.data.images.new(obj.name, res_x, res_y, alpha=True, float_buffer=True, stereo3d=False, is_data=False, tiled=False)
         #lightmap_image.alpha_mode = 'PREMUL'
@@ -190,12 +194,13 @@ for obj in bpy.data.collections['lightmap'].objects:
     mat.node_tree.nodes.active = tex_node
     print('Materials set up for ' + obj.name)
     
-    
+    #Select object to bake from and set as active object:
     bake_from_obj.select_set(True)
     bpy.context.view_layer.objects.active = obj
     
+    #Bake normal map if denoising is enabled:
     if use_denoise is True:
-        print('\nBeginning normal texture bake for object ' + obj.name + '!')
+        print('\nBeginning normal texture bake for object ' + obj.name)
         bpy.ops.object.bake(type='NORMAL', save_mode='EXTERNAL')
         print('Normal texture baking complete for ' + obj.name + '!')
         print('\nSaving normal texture for ' + obj.name)
@@ -204,8 +209,8 @@ for obj in bpy.data.collections['lightmap'].objects:
         print('Image saved successfully to ' + normal_save_path)
         name_list.append(obj.name)
         
-    
-    print('\nBeginning diffuse texture bake for object ' + obj.name + '!')
+    #Bake diffuse map:
+    print('\nBeginning diffuse texture bake for object ' + obj.name)
     bpy.ops.object.bake(type='DIFFUSE', save_mode='EXTERNAL')
     print('Diffuse texture baking complete for ' + obj.name + '!')
     print('\nSaving diffuse texture for ' + obj.name)
@@ -217,14 +222,21 @@ for obj in bpy.data.collections['lightmap'].objects:
         if node.type == 'OUTPUT_MATERIAL':
             output_node = node
     mat.node_tree.links.new(tex_node.outputs['Color'], output_node.inputs['Surface'])
-    obj.hide_render = True
     
+    #Hide object from render:
+    obj.hide_render = True
+    print('Finished baking all texture maps\n')
+
+#Unhide all objects in specified collection from render:
 for obj in bpy.data.collections['lightmap'].objects:
     obj.hide_render = False
 bpy.context.view_layer.objects.active = bake_from_obj
 
+####    Start post processing:
+#Needs re-working for when denoising is disabled
+#Needs ability to run without re-baking textures
 if use_denoise is True:
-    print('\nStarting Denoising...')
+    print('\nStarting Denoising...\n')
     origin_scene = bpy.context.scene
     denoise_scene = bpy.data.scenes.new(name='Denoise_Scene')
     bpy.context.window.scene = denoise_scene
@@ -263,10 +275,8 @@ if use_denoise is True:
         try:
             denoise_scene.render.resolution_x = float(obj_dict[obj_name][2]) * bake_res_scale * float(post_bake_res_scale)
             denoise_scene.render.resolution_y = float(obj_dict[obj_name][3]) * bake_res_scale * float(post_bake_res_scale)
-            print(denoise_scene.render.resolution_x)
-            print(denoise_scene.render.resolution_y)
         except:
-            print('except')
+            #need to re-work
             denoise_scene.render.resolution_x = 32
             denoise_scene.render.resolution_y = 32
         denoise_save_path =  save_directory + '\\denoised\\' + obj_name + '.png'
@@ -286,9 +296,12 @@ if use_denoise is True:
     bpy.context.window.scene = origin_scene
     bpy.data.scenes.remove(denoise_scene) 
     
-print('Finished Denosing')
+if use_denoise is True:
+    print('Finished Denosing')
 
+### Run H2Tool edit-bitmap command if enabled:
 if run_h2codez_bitmap_edit is True:
+    print('Running H2Tool...')
     from os import system
 
     def cmd_run(com):
