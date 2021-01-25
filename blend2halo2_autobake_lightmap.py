@@ -57,6 +57,7 @@ f.close()
 bake_res_scale = 16
 post_bake_res_scale = 0.0625
 use_denoise = True
+run_h2codez_bitmap_edit = True
 apply_gamma = 1.0
 apply_view_transform = 'Filmic'
 apply_look = 'Very High Contrast'
@@ -290,31 +291,32 @@ if use_denoise is True:
     
 print('Finished Denosing')
 
-from os import system
+if run_h2codez_bitmap_edit is True:
+    from os import system
 
-def cmd_run(com):
-    com_run_str = 'cmd /c '
-    system(com_run_str + '"' + com + '"')
-    
-def h2tool_run(com):
-    print(h2tool_path)
-    print(com)
-    cmd_run('"' + h2tool_path + 'h2tool.exe" ' + com)
-    
-if use_denoise is True:
-    replacement_image_path = save_directory + '\\denoised\\'
-else:
-    replacement_image_path = save_directory + '\\auto_baked_color\\'
+    def cmd_run(com):
+        com_run_str = 'cmd /c '
+        system(com_run_str + '"' + com + '"')
 
-for name in name_list:
-    try:
-        h2tool_run('edit-bitmap' + ' ' +
-        '"' + bitmap_tag_edit_path + '" ' +
-        obj_dict[name][1] + ' ' +
-        '"' + replacement_image_path +
-        name +
-        '.PNG' + '"')
-    except:
-        pass
+    def h2tool_run(com):
+        print(h2tool_path)
+        print(com)
+        cmd_run('"' + h2tool_path + 'h2tool.exe" ' + com)
+
+    if use_denoise is True:
+        replacement_image_path = save_directory + '\\denoised\\'
+    else:
+        replacement_image_path = save_directory + '\\auto_baked_color\\'
+
+    for name in name_list:
+        try:
+            h2tool_run('edit-bitmap' + ' ' +
+            '"' + bitmap_tag_edit_path + '" ' +
+            obj_dict[name][1] + ' ' +
+            '"' + replacement_image_path +
+            name +
+            '.PNG' + '"')
+        except:
+            pass
 
 print('Finished!')
