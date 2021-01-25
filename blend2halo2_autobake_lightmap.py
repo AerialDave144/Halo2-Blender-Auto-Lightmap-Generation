@@ -117,14 +117,14 @@ for obj in bpy.data.collections['lightmap'].objects:
 for obj in bpy.data.collections['lightmap'].objects:
     print('\n\nCluster/Instance Object: ' + obj.name)
     try:
-        res_x = int(obj_dict[obj.name][2]) * float(bake_res_scale)
-        res_y = int(obj_dict[obj.name][3]) * float(bake_res_scale)
+        res_x = float(obj_dict[obj.name][2]) * float(bake_res_scale)
+        res_y = float(obj_dict[obj.name][3]) * float(bake_res_scale)
         
-        print('Original Width: ' + obj_dict[obj.name][2])
-        print('Original Height: ' + obj_dict[obj.name][3])
+        print('Original Width: ' + str(obj_dict[obj.name][2]))
+        print('Original Height: ' + str(obj_dict[obj.name][3]))
         
-        print('Render Width: ' + res_x)
-        print('Render Height: ' + res_y)
+        print('Render Width: ' + str(int(res_x)))
+        print('Render Height: ' + str(int(res_y)))
     except:
         #Need to replace this with something else
         res_x = 32
